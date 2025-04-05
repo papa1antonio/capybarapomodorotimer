@@ -214,7 +214,7 @@
     let isRunning = false;
     let isBreak = false;
     let startTime; // Timestamp when timer starts
-    let animationFrameId;
+    let intervalId;
 
     const timerDisplay = document.getElementById('timer');
     const startBtn = document.getElementById('start');
@@ -258,61 +258,60 @@
       const minutes = Math.floor(timeLeft / 60);
       const seconds = timeLeft % 60;
       timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+      console.log(`Time left: ${timeLeft}s`); // Debug log
     }
 
     function startTimer() {
       if (!isRunning) {
+        if (intervalId) clearInterval(intervalId); // Clear any existing interval
         isRunning = true;
         startBtn.disabled = true;
         shortBreakBtn.disabled = true;
         longBreakBtn.disabled = true;
         pauseBtn.disabled = false;
         startTime = Date.now(); // Record start time
-        tick(); // Start the timer loop
+        const duration = timeLeft; // Store initial duration
+        console.log(`Timer started with ${duration}s`); // Debug log
+        intervalId = setInterval(() => {
+          const elapsed = Math.floor((Date.now() - startTime) / 1000); // Seconds elapsed
+          timeLeft = Math.max(0, duration - elapsed); // Update remaining time
+          updateTimer();
+
+          if (timeLeft <= 0) {
+            clearInterval(intervalId);
+            isRunning = false;
+            console.log('Timer finished, playing alarm'); // Debug log
+            alarmSound.play().catch(error => console.log('Alarm play error:', error));
+            if (!isBreak) {
+              startShortBreak();
+            } else {
+              endBreak();
+            }
+          }
+        }, 1000); // Run every 1 second
       }
     }
 
-    function tick() {
-      if (!isRunning) return;
-
-      const now = Date.now();
-      const elapsed = Math.floor((now - startTime) / 1000); // Seconds elapsed
-      const remaining = Math.max(0, timeLeft - elapsed); // Remaining seconds
-
-      if (remaining !== timeLeft) {
-        timeLeft = remaining;
-        updateTimer();
-      }
-
-      if (timeLeft <= 0) {
-        isRunning = false;
-        alarmSound.play().catch(error => console.log('Alarm play error:', error));
-        if (!isBreak) {
-          startShortBreak();
-        } else {
-          endBreak();
-        }
-      } else {
-        animationFrameId = requestAnimationFrame(tick); // Keep ticking
-      }
-    }
-
-    startBtn.addEventListener('click', startTimer);
+    startBtn.addEventListener('click', () => {
+      console.log('Start button clicked'); // Debug log
+      startTimer();
+    });
 
     pauseBtn.addEventListener('click', () => {
       if (isRunning) {
-        cancelAnimationFrame(animationFrameId);
+        clearInterval(intervalId);
         isRunning = false;
         startBtn.disabled = false;
         shortBreakBtn.disabled = false;
         longBreakBtn.disabled = false;
         pauseBtn.disabled = true;
         focusBuddy.classList.remove('animate-capybara');
+        console.log(`Paused at ${timeLeft}s`); // Debug log
       }
     });
 
     resetBtn.addEventListener('click', () => {
-      cancelAnimationFrame(animationFrameId);
+      clearInterval(intervalId);
       isRunning = false;
       isBreak = false;
       timeLeft = 25 * 60;
@@ -323,6 +322,7 @@
       pauseBtn.disabled = true;
       breakSection.style.display = 'none';
       focusBuddy.classList.remove('animate-capybara');
+      console.log('Reset to 25:00'); // Debug log
     });
 
     shortBreakBtn.addEventListener('click', () => {
@@ -344,6 +344,7 @@
       breakMessage.textContent = breakMessages[Math.floor(Math.random() * breakMessages.length)];
       focusBuddy.classList.add('animate-capybara');
       updateTimer();
+      console.log('Starting short break (5min)'); // Debug log
       startTimer();
     }
 
@@ -354,6 +355,7 @@
       breakMessage.textContent = breakMessages[Math.floor(Math.random() * breakMessages.length)];
       focusBuddy.classList.add('animate-capybara');
       updateTimer();
+      console.log('Starting long break (15min)'); // Debug log
       startTimer();
     }
 
@@ -367,6 +369,7 @@
       shortBreakBtn.disabled = false;
       longBreakBtn.disabled = false;
       pauseBtn.disabled = true;
+      console.log('Break ended, back to 25:00'); // Debug log
     }
 
     function applyTheme() {
@@ -398,13 +401,6 @@
     function closePopup() {
       infoPopup.style.display = 'none';
     }
-
-    // Sync timer when tab becomes active again
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && isRunning) {
-        tick(); // Force update when tab is focused
-      }
-    });
 
     applyTheme();
     document.getElementById('theme').addEventListener('change', applyTheme);
