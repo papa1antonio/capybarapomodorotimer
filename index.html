@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Timer Pomodoro Capivara</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      transition: background 0.5s ease;
+    }
+    .container {
+      text-align: center;
+      padding: 30px;
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 15px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+      width: 90%;
+      max-width: 400px;
+      transition: background 0.5s ease, color 0.5s ease;
+    }
+    h1 {
+      font-size: 1.8em;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    .timer {
+      font-size: 4.5em;
+      font-weight: bold;
+      margin: 20px 0;
+      color: #222;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+      transition: color 0.5s ease;
+    }
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 1em;
+      font-weight: bold;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      background: #4caf50;
+      color: white;
+      transition: transform 0.2s ease, background 0.3s ease;
+    }
+    button:hover {
+      transform: scale(1.05);
+    }
+    button:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+    }
+    button#pause { background: #ff9800; }
+    button#reset { background: #f44336; }
+    button#short-break { background: #2196f3; }
+    button#long-break { background: #9c27b0; }
+    button#info-btn { background: #ffeb3b; color: #333; }
+    body.zen .container { background: rgba(255, 255, 255, 0.9); color: #00695c; }
+    body.zen .timer { color: #00695c; }
+    body.zen button { background: #26a69a; }
+    body.space .container { background: rgba(0, 0, 0, 0.8); color: #00d4ff; }
+    body.space .timer { color: #00d4ff; }
+    body.space button { background: #0288d1; }
+    body.cafe .container { background: rgba(255, 245, 238, 0.9); color: #4e342e; }
+    body.cafe .timer { color: #4e342e; }
+    body.cafe button { background: #8d5524; }
+    body.gamer .container { background: rgba(0, 0, 0, 0.85); color: #ff4081; border: 2px solid #ff4081; }
+    body.gamer .timer { color: #ff4081; text-shadow: 0 0 5px #ff4081; }
+    body.gamer button { background: #d81b60; }
+    .buddy-container {
+      margin-top: 20px;
+      text-align: center;
+    }
+    #focus-buddy {
+      max-width: 150px;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      transition: opacity 0.5s ease;
+    }
+    .break-section {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      animation: fadeIn 1s ease-in;
+    }
+    .break-section h2 {
+      font-size: 1.5em;
+      margin: 0 0 10px;
+      color: #333;
+    }
+    .break-section p {
+      font-size: 1.1em;
+      color: #555;
+    }
+    .sound-selector {
+      margin-top: 10px;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-10px); }
+      60% { transform: translateY(-5px); }
+    }
+    .animate-capybara {
+      animation: bounce 2s infinite;
+    }
+    .todo-list {
+      margin-top: 20px;
+      text-align: left;
+    }
+    .todo-list input {
+      padding: 5px;
+      width: 70%;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .todo-list button {
+      padding: 5px 10px;
+      background: #4caf50;
+    }
+    .todo-list ul {
+      list-style: none;
+      padding: 0;
+    }
+    .todo-list li {
+      display: flex;
+      align-items: center;
+      margin: 5px 0;
+    }
+    .todo-list li input[type="checkbox"] {
+      margin-right: 10px;
+    }
+    .popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      max-width: 300px;
+      text-align: center;
+      z-index: 1000;
+    }
+    .popup button {
+      margin-top: 10px;
+      background: #f44336;
+    }
+    @media (max-width: 480px) {
+      .timer { font-size: 3em; }
+      button { padding: 10px 18px; font-size: 0.9em; }
+      .container { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="pomodoro-app">
+    <h1>Capybara Pomodoro Timer</h1>
+    <div class="theme-selector">
+      <label for="theme">Tema: </label>
+      <select id="theme">
+        <option value="zen">Jardim Zen</option>
+        <option value="space">Missão Espacial</option>
+        <option value="cafe">Cafeteria</option>
+        <option value="gamer">Gamer</option>
+      </select>
+    </div>
+    <div class="sound-selector">
+      <label for="alarm-sound">Som do Alarme: </label>
+      <select id="alarm-sound">
+        <option value="bell">Sino Suave</option>
+      </select>
+    </div>
+    <div class="timer" id="timer">25:00</div>
+    <div class="controls">
+      <button id="start">Iniciar</button>
+      <button id="pause" disabled>Pausar</button>
+      <button id="reset">Reiniciar</button>
+      <button id="short-break">Pausa Curta (5min)</button>
+      <button id="long-break">Pausa Longa (15min)</button>
+      <button id="info-btn">O que é isso?</button>
+    </div>
+    <div class="buddy-container">
+      <img id="focus-buddy" src="" alt="Focus Buddy" style="display: none; max-width: 150px; margin-top: 20px;">
+    </div>
+    <div class="break-section" id="break-section" style="display: none;">
+      <h2>Intervalo!</h2>
+      <p id="break-message"></p>
+    </div>
+    <div class="todo-list">
+      <input type="text" id="todo-input" placeholder="Adicione uma tarefa">
+      <button onclick="addTodo()">Adicionar</button>
+      <ul id="todo-list"></ul>
+    </div>
+  </div>
+  <div class="popup" id="info-popup">
+    <p>O <strong>Capybara Pomodoro Timer</strong> é um método de gestão de tempo que usa intervalos de 25 minutos de foco seguidos por pausas curtas (5min) ou longas (15min), acompanhado por capivaras adoráveis para te motivar!</p>
+    <button onclick="closePopup()">Fechar</button>
+  </div>
+
+  <script>
+    let timeLeft = 25 * 60;
+    let isRunning = false;
+    let isBreak = false;
+    let interval;
+
+    const timerDisplay = document.getElementById('timer');
+    const startBtn = document.getElementById('start');
+    const pauseBtn = document.getElementById('pause');
+    const resetBtn = document.getElementById('reset');
+    const shortBreakBtn = document.getElementById('short-break');
+    const longBreakBtn = document.getElementById('long-break');
+    const infoBtn = document.getElementById('info-btn');
+    const themeSelect = document.getElementById('theme');
+    const alarmSoundSelect = document.getElementById('alarm-sound');
+    const focusBuddy = document.getElementById('focus-buddy');
+    const breakSection = document.getElementById('break-section');
+    const breakMessage = document.getElementById('break-message');
+    const infoPopup = document.getElementById('info-popup');
+
+    const themeBackgrounds = {
+      zen: 'https://i.postimg.cc/0QRM9CrS/Generated-Image-April-03-2025-12-38-AM.jpg',
+      space: 'https://i.postimg.cc/YhBKvjFd/Generated-Image-April-03-2025-12-38-AM.jpg',
+      cafe: 'https://i.postimg.cc/MT6w0cF4/cafe.jpg',
+      gamer: 'https://i.postimg.cc/V62cx76y/gamer.jpg'
+    };
+
+    const buddyImages = {
+      zen: 'https://i.postimg.cc/9Qs6mcqD/zen-capybara.jpg',
+      space: 'https://i.postimg.cc/25ptpTPv/space-explorer-capybara.jpg',
+      cafe: 'https://i.postimg.cc/2yHtPYD8/capybara-cafe.jpg',
+      gamer: 'https://i.postimg.cc/xTChLXvk/gemer-capybara.jpg'
+    };
+
+    const breakMessages = [
+      "Respire fundo e sinta a calma tomar conta de você.",
+      "Que tal um alongamento rápido? Estique os braços!",
+      "Feche os olhos por um momento e visualize algo que te inspire.",
+      "Tome um gole d'água e recarregue suas energias.",
+      "Você está indo muito bem! Continue assim!",
+      "Olhe pela janela e deixe a mente descansar por um instante."
+    ];
+
+    function updateTimer() {
+      const minutes = Math.floor(timeLeft / 60);
+      const seconds = timeLeft % 60;
+      timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    }
+
+    function startTimer() {
+      if (!isRunning) {
+        isRunning = true;
+        startBtn.disabled = true;
+        shortBreakBtn.disabled = true;
+        longBreakBtn.disabled = true;
+        pauseBtn.disabled = false;
+        interval = setInterval(() => {
+          if (timeLeft > 0) {
+            timeLeft--;
+            updateTimer();
+          } else {
+            clearInterval(interval);
+            isRunning = false;
+            alarmSounds[alarmSoundSelect.value].play();
+            if (!isBreak) {
+              startShortBreak();
+            } else {
+              endBreak();
+            }
+          }
+        }, 1000);
+      }
+    }
+
+    startBtn.addEventListener('click', startTimer);
+
+    pauseBtn.addEventListener('click', () => {
+      if (isRunning) {
+        clearInterval(interval);
+        isRunning = false;
+        startBtn.disabled = false;
+        shortBreakBtn.disabled = false;
+        longBreakBtn.disabled = false;
+        pauseBtn.disabled = true;
+        focusBuddy.classList.remove('animate-capybara');
+        currentBreakSound.pause();
+        currentBreakSound.currentTime = 0;
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      clearInterval(interval);
+      isRunning = false;
+      isBreak = false;
+      timeLeft = 25 * 60;
+      updateTimer();
+      startBtn.disabled = false;
+      shortBreakBtn.disabled = false;
+      longBreakBtn.disabled = false;
+      pauseBtn.disabled = true;
+      breakSection.style.display = 'none';
+      focusBuddy.classList.remove('animate-capybara');
+      currentBreakSound.pause();
+      currentBreakSound.currentTime = 0;
+    });
+
+    shortBreakBtn.addEventListener('click', () => {
+      if (!isRunning) {
+        startShortBreak();
+      }
+    });
+
+    longBreakBtn.addEventListener('click', () => {
+      if (!isRunning) {
+        startLongBreak();
+      }
+    });
+
+    function startShortBreak() {
+      isBreak = true;
+      timeLeft = 5 * 60;
+      breakSection.style.display = 'block';
+      breakMessage.textContent = breakMessages[Math.floor(Math.random() * breakMessages.length)];
+      focusBuddy.classList.add('animate-capybara');
+      currentBreakSound = breakSounds.waves; // Pode mudar para birds ou rain se preferir
+      currentBreakSound.loop = true;
+      currentBreakSound.play();
+      updateTimer();
+      startTimer();
+    }
+
+    function startLongBreak() {
+      isBreak = true;
+      timeLeft = 15 * 60;
+      breakSection.style.display = 'block';
+      breakMessage.textContent = breakMessages[Math.floor(Math.random() * breakMessages.length)];
+      focusBuddy.classList.add('animate-capybara');
+      currentBreakSound = breakSounds.rain; // Pode mudar para waves ou birds se preferir
+      currentBreakSound.loop = true;
+      currentBreakSound.play();
+      updateTimer();
+      startTimer();
+    }
+
+    function endBreak() {
+      isBreak = false;
+      timeLeft = 25 * 60;
+      breakSection.style.display = 'none';
+      focusBuddy.classList.remove('animate-capybara');
+      currentBreakSound.pause();
+      currentBreakSound.currentTime = 0;
+      updateTimer();
+      startBtn.disabled = false;
+      shortBreakBtn.disabled = false;
+      longBreakBtn.disabled = false;
+      pauseBtn.disabled = true;
+    }
+
+    function applyTheme() {
+      const selectedTheme = themeSelect.value;
+      document.body.className = selectedTheme;
+      document.body.style.backgroundImage = `url('${themeBackgrounds[selectedTheme]}')`;
+      document.body.style.backgroundSize = 'cover';
+      document.body.style.backgroundPosition = 'center';
+      document.body.style.backgroundRepeat = 'no-repeat';
+      focusBuddy.src = buddyImages[selectedTheme];
+      focusBuddy.style.display = 'block';
+    }
+
+    // To-Do List Functions
+    function addTodo() {
+      const input = document.getElementById('todo-input');
+      const taskText = input.value.trim();
+      if (taskText) {
+        const li = document.createElement('li');
+        li.innerHTML = `<input type="checkbox"> ${taskText}`;
+        document.getElementById('todo-list').appendChild(li);
+        input.value = '';
+      }
+    }
+
+    // Pop-Up Functions
+    infoBtn.addEventListener('click', () => {
+      infoPopup.style.display = 'block';
+    });
+
+    function closePopup() {
+      infoPopup.style.display = 'none';
+    }
+
+    applyTheme();
+    themeSelect.addEventListener('change', applyTheme);
+    updateTimer();
+  </script>
+</body>
+</html>
