@@ -6,6 +6,7 @@
   <meta name="google-adsense-account" content="ca-pub-4243106985089230">
   <title>Capybara Pomodoro Timer</title>
   <style>
+    /* Same styles as before, unchanged */
     body {
       font-family: 'Arial', sans-serif;
       display: flex;
@@ -172,14 +173,22 @@
 </head>
 <body>
   <div class="container" id="pomodoro-app">
-    <h1>Capybara Pomodoro Timer</h1>
+    <h1 id="title">Capybara Pomodoro Timer</h1>
     <div class="theme-selector">
-      <label for="theme">Tema: </label>
+      <label for="theme" id="theme-label">Tema: </label>
       <select id="theme">
         <option value="zen">Jardim Zen</option>
         <option value="space">Missão Espacial</option>
         <option value="cafe">Cafeteria</option>
         <option value="gamer">Gamer</option>
+      </select>
+    </div>
+    <div class="language-selector">
+      <label for="language" id="lang-label">Idioma: </label>
+      <select id="language">
+        <option value="pt">Português</option>
+        <option value="en">English</option>
+        <option value="es">Español</option>
       </select>
     </div>
     <div class="timer" id="timer">25:00</div>
@@ -195,25 +204,25 @@
       <img id="focus-buddy" src="" alt="Focus Buddy" style="display: none; max-width: 150px; margin-top: 20px;">
     </div>
     <div class="break-section" id="break-section" style="display: none;">
-      <h2>Intervalo!</h2>
+      <h2 id="break-title">Intervalo!</h2>
       <p id="break-message"></p>
     </div>
     <div class="todo-list">
       <input type="text" id="todo-input" placeholder="Adicione uma tarefa">
-      <button onclick="addTodo()">Adicionar</button>
+      <button id="add-todo-btn" onclick="addTodo()">Adicionar</button>
       <ul id="todo-list"></ul>
     </div>
   </div>
   <div class="popup" id="info-popup">
-    <p>O <strong>Capybara Pomodoro Timer</strong> é um método de gestão de tempo que usa intervalos de 25 minutos de foco seguidos por pausas curtas (5min) ou longas (15min), acompanhado por capivaras adoráveis para te motivar!</p>
-    <button onclick="closePopup()">Fechar</button>
+    <p id="info-text">O <strong>Capybara Pomodoro Timer</strong> é um método de gestão de tempo que usa intervalos de 25 minutos de foco seguidos por pausas curtas (5min) ou longas (15min), acompanhado por capivaras adoráveis para te motivar!</p>
+    <button id="close-popup-btn" onclick="closePopup()">Fechar</button>
   </div>
 
   <script>
-    let timeLeft = 25 * 60; // Initial time in seconds (25 minutes)
+    let timeLeft = 25 * 60;
     let isRunning = false;
     let isBreak = false;
-    let startTime; // Timestamp when timer starts
+    let startTime;
     let intervalId;
 
     const timerDisplay = document.getElementById('timer');
@@ -227,6 +236,82 @@
     const breakSection = document.getElementById('break-section');
     const breakMessage = document.getElementById('break-message');
     const infoPopup = document.getElementById('info-popup');
+    const languageSelect = document.getElementById('language');
+
+    const translations = {
+      pt: {
+        title: "Capybara Pomodoro Timer",
+        themeLabel: "Tema: ",
+        langLabel: "Idioma: ",
+        start: "Iniciar",
+        pause: "Pausar",
+        reset: "Reiniciar",
+        shortBreak: "Pausa Curta (5min)",
+        longBreak: "Pausa Longa (15min)",
+        infoBtn: "O que é isso?",
+        breakTitle: "Intervalo!",
+        breakMessages: [
+          "Respire fundo e sinta a calma tomar conta de você.",
+          "Que tal um alongamento rápido? Estique os braços!",
+          "Feche os olhos por um momento e visualize algo que te inspire.",
+          "Tome um gole d'água e recarregue suas energias.",
+          "Você está indo muito bem! Continue assim!",
+          "Olhe pela janela e deixe a mente descansar por um instante."
+        ],
+        todoPlaceholder: "Adicione uma tarefa",
+        addTodo: "Adicionar",
+        infoText: "O <strong>Capybara Pomodoro Timer</strong> é um método de gestão de tempo que usa intervalos de 25 minutos de foco seguidos por pausas curtas (5min) ou longas (15min), acompanhado por capivaras adoráveis para te motivar!",
+        closePopup: "Fechar"
+      },
+      en: {
+        title: "Capybara Pomodoro Timer",
+        themeLabel: "Theme: ",
+        langLabel: "Language: ",
+        start: "Start",
+        pause: "Pause",
+        reset: "Reset",
+        shortBreak: "Short Break (5min)",
+        longBreak: "Long Break (15min)",
+        infoBtn: "What is this?",
+        breakTitle: "Break!",
+        breakMessages: [
+          "Take a deep breath and feel calm wash over you.",
+          "How about a quick stretch? Reach for the sky!",
+          "Close your eyes for a moment and picture something inspiring.",
+          "Sip some water and recharge your energy.",
+          "You’re doing great! Keep it up!",
+          "Look out the window and let your mind rest for a bit."
+        ],
+        todoPlaceholder: "Add a task",
+        addTodo: "Add",
+        infoText: "The <strong>Capybara Pomodoro Timer</strong> is a time management method using 25-minute focus intervals followed by short (5min) or long (15min) breaks, accompanied by adorable capybaras to keep you motivated!",
+        closePopup: "Close"
+      },
+      es: {
+        title: "Temporizador Pomodoro Capybara",
+        themeLabel: "Tema: ",
+        langLabel: "Idioma: ",
+        start: "Iniciar",
+        pause: "Pausar",
+        reset: "Reiniciar",
+        shortBreak: "Descanso Corto (5min)",
+        longBreak: "Descanso Largo (15min)",
+        infoBtn: "¿Qué es esto?",
+        breakTitle: "¡Descanso!",
+        breakMessages: [
+          "Respira hondo y siente la calma envolverte.",
+          "¿Qué tal un estiramiento rápido? ¡Estira los brazos!",
+          "Cierra los ojos un momento y visualiza algo inspirador.",
+          "Toma un sorbo de agua y recarga tus energías.",
+          "¡Lo estás haciendo muy bien! ¡Sigue así!",
+          "Mira por la ventana y deja descansar tu mente un rato."
+        ],
+        todoPlaceholder: "Añadir una tarea",
+        addTodo: "Añadir",
+        infoText: "El <strong>Temporizador Pomodoro Capybara</strong> es un método de gestión del tiempo que usa intervalos de 25 minutos de enfoque seguidos de descansos cortos (5min) o largos (15min), acompañado de adorables capibaras para mantenerte motivado!",
+        closePopup: "Cerrar"
+      }
+    };
 
     const themeBackgrounds = {
       zen: 'https://i.postimg.cc/0QRM9CrS/Generated-Image-April-03-2025-12-38-AM.jpg',
@@ -242,15 +327,6 @@
       gamer: 'https://i.postimg.cc/xTChLXvk/gemer-capybara.jpg'
     };
 
-    const breakMessages = [
-      "Respire fundo e sinta a calma tomar conta de você.",
-      "Que tal um alongamento rápido? Estique os braços!",
-      "Feche os olhos por um momento e visualize algo que te inspire.",
-      "Tome um gole d'água e recarregue suas energias.",
-      "Você está indo muito bem! Continue assim!",
-      "Olhe pela janela e deixe a mente descansar por um instante."
-    ];
-
     // Replace with your actual working Freesound URL
     const alarmSound = new Audio('https://freesound.org/data/previews/339/339810_5121236-lq.mp3');
 
@@ -258,29 +334,29 @@
       const minutes = Math.floor(timeLeft / 60);
       const seconds = timeLeft % 60;
       timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-      console.log(`Time left: ${timeLeft}s`); // Debug log
+      console.log(`Time left: ${timeLeft}s`);
     }
 
     function startTimer() {
       if (!isRunning) {
-        if (intervalId) clearInterval(intervalId); // Clear any existing interval
+        if (intervalId) clearInterval(intervalId);
         isRunning = true;
         startBtn.disabled = true;
         shortBreakBtn.disabled = true;
         longBreakBtn.disabled = true;
         pauseBtn.disabled = false;
-        startTime = Date.now(); // Record start time
-        const duration = timeLeft; // Store initial duration
-        console.log(`Timer started with ${duration}s`); // Debug log
+        startTime = Date.now();
+        const duration = timeLeft;
+        console.log(`Timer started with ${duration}s`);
         intervalId = setInterval(() => {
-          const elapsed = Math.floor((Date.now() - startTime) / 1000); // Seconds elapsed
-          timeLeft = Math.max(0, duration - elapsed); // Update remaining time
+          const elapsed = Math.floor((Date.now() - startTime) / 1000);
+          timeLeft = Math.max(0, duration - elapsed);
           updateTimer();
 
           if (timeLeft <= 0) {
             clearInterval(intervalId);
             isRunning = false;
-            console.log('Timer finished, playing alarm'); // Debug log
+            console.log('Timer finished, playing alarm');
             alarmSound.play().catch(error => console.log('Alarm play error:', error));
             if (!isBreak) {
               startShortBreak();
@@ -288,12 +364,34 @@
               endBreak();
             }
           }
-        }, 1000); // Run every 1 second
+        }, 1000);
+      }
+    }
+
+    function updateLanguage() {
+      const lang = languageSelect.value;
+      document.getElementById('title').textContent = translations[lang].title;
+      document.getElementById('theme-label').textContent = translations[lang].themeLabel;
+      document.getElementById('lang-label').textContent = translations[lang].langLabel;
+      startBtn.textContent = translations[lang].start;
+      pauseBtn.textContent = translations[lang].pause;
+      resetBtn.textContent = translations[lang].reset;
+      shortBreakBtn.textContent = translations[lang].shortBreak;
+      longBreakBtn.textContent = translations[lang].longBreak;
+      infoBtn.textContent = translations[lang].infoBtn;
+      document.getElementById('break-title').textContent = translations[lang].breakTitle;
+      document.getElementById('todo-input').placeholder = translations[lang].todoPlaceholder;
+      document.getElementById('add-todo-btn').textContent = translations[lang].addTodo;
+      document.getElementById('info-text').innerHTML = translations[lang].infoText;
+      document.getElementById('close-popup-btn').textContent = translations[lang].closePopup;
+      // Update break message if visible
+      if (breakSection.style.display === 'block') {
+        breakMessage.textContent = translations[lang].breakMessages[Math.floor(Math.random() * translations[lang].breakMessages.length)];
       }
     }
 
     startBtn.addEventListener('click', () => {
-      console.log('Start button clicked'); // Debug log
+      console.log('Start button clicked');
       startTimer();
     });
 
@@ -306,7 +404,7 @@
         longBreakBtn.disabled = false;
         pauseBtn.disabled = true;
         focusBuddy.classList.remove('animate-capybara');
-        console.log(`Paused at ${timeLeft}s`); // Debug log
+        console.log(`Paused at ${timeLeft}s`);
       }
     });
 
@@ -322,7 +420,7 @@
       pauseBtn.disabled = true;
       breakSection.style.display = 'none';
       focusBuddy.classList.remove('animate-capybara');
-      console.log('Reset to 25:00'); // Debug log
+      console.log('Reset to 25:00');
     });
 
     shortBreakBtn.addEventListener('click', () => {
@@ -341,10 +439,11 @@
       isBreak = true;
       timeLeft = 5 * 60;
       breakSection.style.display = 'block';
-      breakMessage.textContent = breakMessages[Math.floor(Math.random() * breakMessages.length)];
+      const lang = languageSelect.value;
+      breakMessage.textContent = translations[lang].breakMessages[Math.floor(Math.random() * translations[lang].breakMessages.length)];
       focusBuddy.classList.add('animate-capybara');
       updateTimer();
-      console.log('Starting short break (5min)'); // Debug log
+      console.log('Starting short break (5min)');
       startTimer();
     }
 
@@ -352,10 +451,11 @@
       isBreak = true;
       timeLeft = 15 * 60;
       breakSection.style.display = 'block';
-      breakMessage.textContent = breakMessages[Math.floor(Math.random() * breakMessages.length)];
+      const lang = languageSelect.value;
+      breakMessage.textContent = translations[lang].breakMessages[Math.floor(Math.random() * translations[lang].breakMessages.length)];
       focusBuddy.classList.add('animate-capybara');
       updateTimer();
-      console.log('Starting long break (15min)'); // Debug log
+      console.log('Starting long break (15min)');
       startTimer();
     }
 
@@ -369,7 +469,7 @@
       shortBreakBtn.disabled = false;
       longBreakBtn.disabled = false;
       pauseBtn.disabled = true;
-      console.log('Break ended, back to 25:00'); // Debug log
+      console.log('Break ended, back to 25:00');
     }
 
     function applyTheme() {
@@ -402,9 +502,12 @@
       infoPopup.style.display = 'none';
     }
 
+    languageSelect.addEventListener('change', updateLanguage);
+
     applyTheme();
     document.getElementById('theme').addEventListener('change', applyTheme);
     updateTimer();
+    updateLanguage(); // Set initial language
   </script>
 </body>
 </html>
