@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="google-adsense-account" content="ca-pub-4243106985089230">
-  <title>Timer Pomodoro Capivara</title>
+  <title>Capybara Pomodoro Timer</title>
   <style>
     body {
       font-family: 'Arial', sans-serif;
@@ -107,9 +107,6 @@
       font-size: 1.1em;
       color: #555;
     }
-    .sound-selector {
-      margin-top: 10px;
-    }
     @keyframes fadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
@@ -185,12 +182,6 @@
         <option value="gamer">Gamer</option>
       </select>
     </div>
-    <div class="sound-selector">
-      <label for="alarm-sound">Som do Alarme: </label>
-      <select id="alarm-sound">
-        <option value="bell">Sino Suave</option>
-      </select>
-    </div>
     <div class="timer" id="timer">25:00</div>
     <div class="controls">
       <button id="start">Iniciar</button>
@@ -219,10 +210,11 @@
   </div>
 
   <script>
-    let timeLeft = 25 * 60;
+    let timeLeft = 25 * 60; // Initial time in seconds (25 minutes)
     let isRunning = false;
     let isBreak = false;
-    let interval;
+    let startTime; // Timestamp when timer starts
+    let animationFrameId;
 
     const timerDisplay = document.getElementById('timer');
     const startBtn = document.getElementById('start');
@@ -231,8 +223,6 @@
     const shortBreakBtn = document.getElementById('short-break');
     const longBreakBtn = document.getElementById('long-break');
     const infoBtn = document.getElementById('info-btn');
-    const themeSelect = document.getElementById('theme');
-    const alarmSoundSelect = document.getElementById('alarm-sound');
     const focusBuddy = document.getElementById('focus-buddy');
     const breakSection = document.getElementById('break-section');
     const breakMessage = document.getElementById('break-message');
@@ -261,6 +251,9 @@
       "Olhe pela janela e deixe a mente descansar por um instante."
     ];
 
+    // Replace with your actual working Freesound URL
+    const alarmSound = new Audio('https://freesound.org/data/previews/123/45678_123456-lq.mp3');
+
     function updateTimer() {
       const minutes = Math.floor(timeLeft / 60);
       const seconds = timeLeft % 60;
@@ -274,21 +267,33 @@
         shortBreakBtn.disabled = true;
         longBreakBtn.disabled = true;
         pauseBtn.disabled = false;
-        interval = setInterval(() => {
-          if (timeLeft > 0) {
-            timeLeft--;
-            updateTimer();
-          } else {
-            clearInterval(interval);
-            isRunning = false;
-            alarmSounds[alarmSoundSelect.value].play();
-            if (!isBreak) {
-              startShortBreak();
-            } else {
-              endBreak();
-            }
-          }
-        }, 1000);
+        startTime = Date.now(); // Record start time
+        tick(); // Start the timer loop
+      }
+    }
+
+    function tick() {
+      if (!isRunning) return;
+
+      const now = Date.now();
+      const elapsed = Math.floor((now - startTime) / 1000); // Seconds elapsed
+      const remaining = Math.max(0, timeLeft - elapsed); // Remaining seconds
+
+      if (remaining !== timeLeft) {
+        timeLeft = remaining;
+        updateTimer();
+      }
+
+      if (timeLeft <= 0) {
+        isRunning = false;
+        alarmSound.play().catch(error => console.log('Alarm play error:', error));
+        if (!isBreak) {
+          startShortBreak();
+        } else {
+          endBreak();
+        }
+      } else {
+        animationFrameId = requestAnimationFrame(tick); // Keep ticking
       }
     }
 
@@ -296,20 +301,18 @@
 
     pauseBtn.addEventListener('click', () => {
       if (isRunning) {
-        clearInterval(interval);
+        cancelAnimationFrame(animationFrameId);
         isRunning = false;
         startBtn.disabled = false;
         shortBreakBtn.disabled = false;
         longBreakBtn.disabled = false;
         pauseBtn.disabled = true;
         focusBuddy.classList.remove('animate-capybara');
-        currentBreakSound.pause();
-        currentBreakSound.currentTime = 0;
       }
     });
 
     resetBtn.addEventListener('click', () => {
-      clearInterval(interval);
+      cancelAnimationFrame(animationFrameId);
       isRunning = false;
       isBreak = false;
       timeLeft = 25 * 60;
@@ -320,8 +323,6 @@
       pauseBtn.disabled = true;
       breakSection.style.display = 'none';
       focusBuddy.classList.remove('animate-capybara');
-      currentBreakSound.pause();
-      currentBreakSound.currentTime = 0;
     });
 
     shortBreakBtn.addEventListener('click', () => {
@@ -342,9 +343,6 @@
       breakSection.style.display = 'block';
       breakMessage.textContent = breakMessages[Math.floor(Math.random() * breakMessages.length)];
       focusBuddy.classList.add('animate-capybara');
-      currentBreakSound = breakSounds.waves; // Pode mudar para birds ou rain se preferir
-      currentBreakSound.loop = true;
-      currentBreakSound.play();
       updateTimer();
       startTimer();
     }
@@ -355,9 +353,6 @@
       breakSection.style.display = 'block';
       breakMessage.textContent = breakMessages[Math.floor(Math.random() * breakMessages.length)];
       focusBuddy.classList.add('animate-capybara');
-      currentBreakSound = breakSounds.rain; // Pode mudar para waves ou birds se preferir
-      currentBreakSound.loop = true;
-      currentBreakSound.play();
       updateTimer();
       startTimer();
     }
@@ -367,8 +362,6 @@
       timeLeft = 25 * 60;
       breakSection.style.display = 'none';
       focusBuddy.classList.remove('animate-capybara');
-      currentBreakSound.pause();
-      currentBreakSound.currentTime = 0;
       updateTimer();
       startBtn.disabled = false;
       shortBreakBtn.disabled = false;
@@ -377,7 +370,7 @@
     }
 
     function applyTheme() {
-      const selectedTheme = themeSelect.value;
+      const selectedTheme = document.getElementById('theme').value;
       document.body.className = selectedTheme;
       document.body.style.backgroundImage = `url('${themeBackgrounds[selectedTheme]}')`;
       document.body.style.backgroundSize = 'cover';
@@ -387,7 +380,6 @@
       focusBuddy.style.display = 'block';
     }
 
-    // To-Do List Functions
     function addTodo() {
       const input = document.getElementById('todo-input');
       const taskText = input.value.trim();
@@ -399,7 +391,6 @@
       }
     }
 
-    // Pop-Up Functions
     infoBtn.addEventListener('click', () => {
       infoPopup.style.display = 'block';
     });
@@ -408,8 +399,15 @@
       infoPopup.style.display = 'none';
     }
 
+    // Sync timer when tab becomes active again
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && isRunning) {
+        tick(); // Force update when tab is focused
+      }
+    });
+
     applyTheme();
-    themeSelect.addEventListener('change', applyTheme);
+    document.getElementById('theme').addEventListener('change', applyTheme);
     updateTimer();
   </script>
 </body>
